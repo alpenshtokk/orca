@@ -235,22 +235,25 @@ describe('TabGroupSplitLayout divider drag', () => {
     expect(resizeObserverDisconnectMock).toHaveBeenCalledOnce()
   })
 
-  it('resizes panes when the platform does not confirm pointer capture (Linux)', async () => {
+  it('keeps tracking off the divider when the platform does not confirm pointer capture (Linux)', async () => {
     // Why: Linux Chromium reports hasPointerCapture() false while pointermove still arrives (#34287).
     handle.hasPointerCapture = () => false
 
     await act(async () => {
       handle.dispatchEvent(pointerEvent('pointerdown', { pointerId: 1 }))
-      handle.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 300 }))
-      handle.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 320 }))
+      document.body.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 300 }))
+      document.body.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 320 }))
     })
     expect(firstPane.style.flex).toBe('0.32 1 0%')
     expect(secondPane.style.flex).toBe('0.68 1 0%')
 
     await act(async () => {
-      handle.dispatchEvent(pointerEvent('pointerup', { pointerId: 1 }))
+      document.body.dispatchEvent(pointerEvent('pointerup', { pointerId: 1 }))
+      document.body.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 600 }))
     })
+    expect(setTabGroupSplitRatioMock).toHaveBeenCalledTimes(1)
     expect(setTabGroupSplitRatioMock).toHaveBeenCalledWith('wt-1', '', 0.32)
+    expect(firstPane.style.flex).toBe('0.32 1 0%')
   })
 
   it('commits and releases drag resources on unmount', async () => {
